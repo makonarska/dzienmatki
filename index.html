@@ -1,29 +1,504 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Głosowanie</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #111;
-      color: #eee;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-    }
-    h1 {
-      font-size: 2.5rem;
-      letter-spacing: 2px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konkurs "Piękno po Mamie" - Głosowanie</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #9CDABC;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #2c3e2d;
+            font-size: 2.5em;
+        }
+
+        .thank-you {
+            display: none;
+            text-align: center;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #2c3e2d;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .content-item {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .content-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .content-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e2d;
+            margin-bottom: 15px;
+        }
+
+        .youtube-video {
+            width: 100%;
+            height: 250px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .photo-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .photo-container img {
+            max-width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .vote-section {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .vote-checkbox {
+            display: none;
+        }
+
+        .vote-label {
+            display: inline-block;
+            background-color: #6bb77b;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        .vote-label:hover {
+            background-color: #5aa669;
+            transform: scale(1.05);
+        }
+
+        .vote-checkbox:checked + .vote-label {
+            background-color: #2c3e2d;
+        }
+
+        .vote-label.disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .vote-label.disabled:hover {
+            background-color: #ccc;
+            transform: none;
+        }
+
+        .admin-section {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #fff;
+        }
+
+        .admin-btn {
+            background-color: #2c3e2d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .admin-btn:hover {
+            background-color: #1a231b;
+        }
+
+        .admin-panel {
+            background-color: #fff;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .admin-panel.hidden {
+            display: none;
+        }
+
+        .password-section {
+            margin-bottom: 20px;
+        }
+
+        .password-input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .results {
+            text-align: left;
+        }
+
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            color: #2c3e2d;
+            font-style: italic;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>GŁOSOWANIE JUŻ WKRÓTCE</h1>
+    <div class="container">
+        <h1>Konkurs <strong>„Piękno po Mamie"</strong> - głosowanie</h1>
+        
+        <p style="text-align: center; font-size: 1.2em; color: #2c3e2d; margin-bottom: 25px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Obejrzyj wszystkie zgłoszenia i oddaj głos na ten, który podoba Ci się najbardziej. Głosowanie trwa do XX/XX.
+        </p>
+        
+        <div class="thank-you" id="thankYouMessage">
+            Dziękujemy za Twój głos!
+        </div>
+
+        <div class="content-grid" id="contentGrid">
+            <!-- Filmy YouTube -->
+            <div class="content-item">
+                <div class="content-number">1.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/TtYaq0ZPgU4" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote1" class="vote-checkbox" onchange="handleVote(1)">
+                    <label for="vote1" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">2.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/wxUnP7YmQ9U" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote2" class="vote-checkbox" onchange="handleVote(2)">
+                    <label for="vote2" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">3.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/5YMMeHGCa6E" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote3" class="vote-checkbox" onchange="handleVote(3)">
+                    <label for="vote3" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">4.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/KhrxOW1kHj0" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote4" class="vote-checkbox" onchange="handleVote(4)">
+                    <label for="vote4" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">5.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/YizzL2cTu-k" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote5" class="vote-checkbox" onchange="handleVote(5)">
+                    <label for="vote5" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">6.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/q1KcpMRFqAg" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote6" class="vote-checkbox" onchange="handleVote(6)">
+                    <label for="vote6" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">7.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/vsDTxSe0WME" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote7" class="vote-checkbox" onchange="handleVote(7)">
+                    <label for="vote7" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">8.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/GQz4ZQ1KjX4" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote8" class="vote-checkbox" onchange="handleVote(8)">
+                    <label for="vote8" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <div class="content-item">
+                <div class="content-number">9.</div>
+                <iframe class="youtube-video" src="https://www.youtube.com/embed/uQMTNQ89_Bc" frameborder="0" allowfullscreen></iframe>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote9" class="vote-checkbox" onchange="handleVote(9)">
+                    <label for="vote9" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+
+            <!-- Zdjęcie z Google Drive -->
+            <div class="content-item">
+                <div class="content-number">10.</div>
+                <div class="photo-container">
+                    <img src="https://drive.google.com/thumbnail?id=1i7F6zxT53MXTUGL5mZUqIEmb_wKvvOI8&sz=w500" alt="Zdjęcie konkursowe" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPtCX0LTRmNC40LUgavG0LXRiaD48L3RleHQ+PC9zdmc+'">
+                </div>
+                <div class="vote-section">
+                    <input type="checkbox" id="vote10" class="vote-checkbox" onchange="handleVote(10)">
+                    <label for="vote10" class="vote-label">Głosuję na ten projekt</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-section">
+            <button class="admin-btn" onclick="toggleAdminPanel()">Panel Administratora</button>
+            
+            <div class="admin-panel hidden" id="adminPanel">
+                <div class="password-section" id="passwordSection">
+                    <input type="password" id="passwordInput" class="password-input" placeholder="Wprowadź hasło">
+                    <button class="admin-btn" onclick="checkPassword()">Zaloguj</button>
+                </div>
+                
+                <div class="results hidden" id="resultsSection">
+                    <h3>Wyniki głosowania:</h3>
+                    <button class="admin-btn" onclick="loadResults()" style="margin-bottom: 15px;">Odśwież wyniki</button>
+                    <div id="voteResults">
+                        <div class="loading">Ładowanie wyników...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL do Twojego Google Apps Script
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwATACK7g8TjnTH-MzmVslAB_ybwYx-xsW4V0DkYNOMI8UssBl1ULox4OKiWafzFc3q/exec';
+        
+        let hasVoted = false;
+
+        // Sprawdź czy użytkownik już głosował
+        if (localStorage && localStorage.getItem('hasVoted') === 'true') {
+            hasVoted = true;
+            showThankYouMessage();
+        }
+
+        function handleVote(projectNumber) {
+            if (hasVoted) return;
+            
+            // Wyślij głos do Google Sheets
+            sendVoteToGoogleSheets(projectNumber);
+        }
+
+        function sendVoteToGoogleSheets(projectNumber) {
+            // Zablokuj możliwość głosowania
+            disableAllVoting();
+            
+            // Pokaż loading
+            showLoadingMessage();
+            
+            // Wyślij POST request do Google Apps Script
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'vote',
+                    project: projectNumber,
+                    timestamp: new Date().toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Oznacz że użytkownik zagłosował
+                    hasVoted = true;
+                    if (localStorage) {
+                        localStorage.setItem('hasVoted', 'true');
+                    }
+                    showThankYouMessage();
+                } else {
+                    showErrorMessage('Błąd podczas zapisywania głosu. Spróbuj ponownie.');
+                    enableAllVoting();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showErrorMessage('Błąd połączenia. Sprawdź internet i spróbuj ponownie.');
+                enableAllVoting();
+            });
+        }
+
+        function disableAllVoting() {
+            const voteLabels = document.querySelectorAll('.vote-label');
+            voteLabels.forEach(label => {
+                label.classList.add('disabled');
+                label.style.pointerEvents = 'none';
+            });
+        }
+
+        function enableAllVoting() {
+            const voteLabels = document.querySelectorAll('.vote-label');
+            voteLabels.forEach(label => {
+                label.classList.remove('disabled');
+                label.style.pointerEvents = 'auto';
+            });
+        }
+
+        function showThankYouMessage() {
+            document.getElementById('thankYouMessage').style.display = 'block';
+            const voteLabels = document.querySelectorAll('.vote-label');
+            voteLabels.forEach(label => {
+                label.style.display = 'none';
+            });
+        }
+
+        function showLoadingMessage() {
+            // Można dodać loading indicator jeśli potrzeba
+        }
+
+        function showErrorMessage(message) {
+            // Usuń poprzednie komunikaty błędu
+            const existingError = document.querySelector('.error');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Dodaj nowy komunikat błędu
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('h1').nextSibling);
+            
+            // Usuń komunikat po 5 sekundach
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function toggleAdminPanel() {
+            const panel = document.getElementById('adminPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            
+            if (password === '2212') {
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('resultsSection').classList.remove('hidden');
+                loadResults();
+            } else {
+                alert('Nieprawidłowe hasło!');
+            }
+        }
+
+        function loadResults() {
+            const resultsDiv = document.getElementById('voteResults');
+            resultsDiv.innerHTML = '<div class="loading">Ładowanie wyników...</div>';
+            
+            // Pobierz wyniki z Google Sheets
+            fetch(GOOGLE_SCRIPT_URL + '?action=getResults')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResults(data.results);
+                } else {
+                    resultsDiv.innerHTML = '<div class="error">Błąd podczas ładowania wyników</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<div class="error">Błąd połączenia</div>';
+            });
+        }
+
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('voteResults');
+            let resultsHTML = '';
+            
+            for (let i = 1; i <= 10; i++) {
+                const votes = results[i] || 0;
+                resultsHTML += `<div class="result-item">${i}: ${votes} głosów</div>`;
+            }
+            
+            resultsDiv.innerHTML = resultsHTML;
+        }
+
+        // Sprawdź czy GOOGLE_SCRIPT_URL jest skonfigurowany
+        if (GOOGLE_SCRIPT_URL === 'WKLEJ_TUTAJ_SWOJ_GOOGLE_APPS_SCRIPT_URL') {
+            console.warn('UWAGA: Musisz skonfigurować GOOGLE_SCRIPT_URL!');
+        }
+    </script>
 </body>
 </html>
