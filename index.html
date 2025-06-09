@@ -366,38 +366,35 @@
             // Pokaż loading
             showLoadingMessage();
             
-            // Wyślij POST request do Google Apps Script
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    action: 'vote',
-                    project: projectNumber,
-                    timestamp: new Date().toISOString()
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Oznacz że użytkownik zagłosował
-                    hasVoted = true;
-                    if (localStorage) {
-                        localStorage.setItem('hasVoted', 'true');
-                    }
-                    showThankYouMessage();
-                } else {
-                    showErrorMessage('Błąd podczas zapisywania głosu. Spróbuj ponownie.');
+            // Użyj JSONP zamiast fetch
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_SCRIPT_URL}?action=vote&project=${projectNumber}&timestamp=${new Date().toISOString()}&callback=handleVoteResponse`;
+            document.head.appendChild(script);
+            
+            // Usuń skrypt po 10 sekundach (timeout)
+            setTimeout(() => {
+                script.remove();
+                if (!hasVoted) {
+                    showErrorMessage('Timeout - spróbuj ponownie.');
                     enableAllVoting();
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorMessage('Błąd połączenia. Sprawdź internet i spróbuj ponownie.');
-                enableAllVoting();
-            });
+            }, 10000);
         }
+
+        // Funkcja callback dla JSONP
+        window.handleVoteResponse = function(data) {
+            if (data.success) {
+                // Oznacz że użytkownik zagłosował
+                hasVoted = true;
+                if (localStorage) {
+                    localStorage.setItem('hasVoted', 'true');
+                }
+                showThankYouMessage();
+            } else {
+                showErrorMessage('Błąd podczas zapisywania głosu. Spróbuj ponownie.');
+                enableAllVoting();
+            }
+        };
 
         function disableAllVoting() {
             const voteLabels = document.querySelectorAll('.vote-label');
@@ -467,21 +464,29 @@
             const resultsDiv = document.getElementById('voteResults');
             resultsDiv.innerHTML = '<div class="loading">Ładowanie wyników...</div>';
             
-            // Pobierz wyniki z Google Sheets
-            fetch(GOOGLE_SCRIPT_URL + '?action=getResults')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayResults(data.results);
-                } else {
-                    resultsDiv.innerHTML = '<div class="error">Błąd podczas ładowania wyników</div>';
+            // Użyj JSONP dla pobierania wyników
+            const script = document.createElement('script');
+            script.src = `${GOOGLE_SCRIPT_URL}?action=getResults&callback=handleResultsResponse`;
+            document.head.appendChild(script);
+            
+            // Timeout dla wyników
+            setTimeout(() => {
+                script.remove();
+                if (document.querySelector('.loading')) {
+                    resultsDiv.innerHTML = '<div class="error">Timeout - spróbuj ponownie</div>';
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                resultsDiv.innerHTML = '<div class="error">Błąd połączenia</div>';
-            });
+            }, 10000);
         }
+
+        // Funkcja callback dla wyników
+        window.handleResultsResponse = function(data) {
+            const resultsDiv = document.getElementById('voteResults');
+            if (data.success) {
+                displayResults(data.results);
+            } else {
+                resultsDiv.innerHTML = '<div class="error">Błąd podczas ładowania wyników</div>';
+            }
+        };
 
         function displayResults(results) {
             const resultsDiv = document.getElementById('voteResults');
